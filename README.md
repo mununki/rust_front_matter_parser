@@ -23,6 +23,7 @@ keyword: ["first", "post"]
 - Blazing fast
 - Creating `*.json` or `*.js` file from all markdown files in target directory
 - CLI tool
+- Zero dependencies
 
 ## Build
 
