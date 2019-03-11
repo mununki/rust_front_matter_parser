@@ -1,0 +1,7 @@
+[package]
+name = "rust_front_matter_parser"
+version = "0.1.0"
+authors = ["moondaddi <woonki.moon@gmail.com>"]
+edition = "2018"
+
+[dependencies]

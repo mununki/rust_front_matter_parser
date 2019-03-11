@@ -1,0 +1,4 @@
+[[package]]
+name = "rust_front_matter_parser"
+version = "0.1.0"
+
