@@ -10,8 +10,8 @@ The front matter stays on top of markdown content and contains the metadata of i
 ---
 title: First Post
 createdAt: 2018-08-24
-category: ['devlogs']
-keyword: ['first', 'post']
+category: ["devlogs"]
+keyword: ["first", "post"]
 ---
 
 // markdown body content...
