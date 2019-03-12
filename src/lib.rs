@@ -93,6 +93,13 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
             if let Ok(entry) = entry {
                 // Here, 'entry' is a 'std::fs::DirEntry'
                 if !entry.path().is_dir() {
+                    // skip the loop if file extension is not one of 'md' or 'mdx'
+                    if let Some(ext) = entry.path().extension().and_then(|s| s.to_str()) {
+                        if !((ext == "md") | (ext == "mdx")) {
+                            continue;
+                        }
+                    }
+
                     if let Ok(markdown_content) = fs::read_to_string(entry.path()) {
                         println!("*** {:?}", entry.file_name());
 
@@ -142,7 +149,7 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
     result.pop();
     if config.output_type == OutputType::JS {
         let mut output_result = format!(
-            "const {0} = [\n{1}\n]\n\nexport default {0};",
+            "const {0} = [\n{1}\n]\n\nmodule.exports = {0};",
             config.filename, result
         );
         if let Err(e) = create_write(config, &mut output_result) {
@@ -272,7 +279,7 @@ pub fn convert_front_matter_js(line: &str) -> String {
         if let Some(value) = split_line.next() {
             if check_if_first_blank(value) {
                 if check_if_array(remove_first_blank(value)) {
-                    result.push_str(value);
+                    result.push_str(remove_first_blank(value));
                 } else {
                     if check_if_first_single_quote(remove_first_blank(value)) {
                         result.push_str(&add_double_quote(remove_quote(remove_first_blank(value))));
@@ -321,7 +328,7 @@ pub fn convert_front_matter_json(line: &str) -> String {
         if let Some(value) = split_line.next() {
             if check_if_first_blank(value) {
                 if check_if_array(remove_first_blank(value)) {
-                    result.push_str(value);
+                    result.push_str(remove_first_blank(value));
                 } else {
                     if check_if_first_single_quote(remove_first_blank(value)) {
                         result.push_str(&add_double_quote(remove_first_blank(value)));

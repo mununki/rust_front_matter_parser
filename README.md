@@ -95,4 +95,5 @@ export default postList;
 ### Next to do
 
 - [x] Write the output to file
+- [x] Parse only md, mdx files
 - [ ] Error Handling (!important)
