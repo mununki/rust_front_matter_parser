@@ -23,7 +23,7 @@ impl Config {
 
         let _output_check = match args.next() {
             Some(arg) => {
-                if arg == "-t".to_string() {
+                if arg == "-t" {
                     arg
                 } else {
                     return Err("'Output Type' option should be '-t'");
@@ -47,7 +47,7 @@ impl Config {
 
         let _filename_check = match args.next() {
             Some(arg) => {
-                if arg == "-f".to_string() {
+                if arg == "-f" {
                     arg
                 } else {
                     return Err("'Filename' option should be '-f'");
@@ -63,7 +63,7 @@ impl Config {
 
         let _src_check = match args.next() {
             Some(arg) => {
-                if arg == "-s".to_string() {
+                if arg == "-s" {
                     arg
                 } else {
                     return Err("'Target directory' option should be '-s'");
@@ -104,14 +104,12 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
                         println!("*** {:?}", entry.file_name());
 
                         let front_matter_as_vec_str = parse_front_matter(&markdown_content);
-                        if front_matter_as_vec_str.len() != 0 {
+                        if !front_matter_as_vec_str.is_empty() {
                             let total_lines: usize = front_matter_as_vec_str.len();
-                            let mut counter_line: usize = 0;
                             result.push_str("{\n");
-                            for item in front_matter_as_vec_str {
-                                counter_line += 1;
+                            for (counter_line, item) in front_matter_as_vec_str.iter().enumerate() {
                                 if config.output_type == OutputType::JS {
-                                    if counter_line == total_lines {
+                                    if (counter_line + 1) == total_lines {
                                         result.push_str(&format!(
                                             "\t{}\n",
                                             convert_front_matter_js(item)
@@ -122,18 +120,16 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
                                             convert_front_matter_js(item)
                                         ));
                                     }
+                                } else if (counter_line + 1) == total_lines {
+                                    result.push_str(&format!(
+                                        "\t{}\n",
+                                        convert_front_matter_json(item)
+                                    ));
                                 } else {
-                                    if counter_line == total_lines {
-                                        result.push_str(&format!(
-                                            "\t{}\n",
-                                            convert_front_matter_json(item)
-                                        ));
-                                    } else {
-                                        result.push_str(&format!(
-                                            "\t{},\n",
-                                            convert_front_matter_json(item)
-                                        ));
-                                    }
+                                    result.push_str(&format!(
+                                        "\t{},\n",
+                                        convert_front_matter_json(item)
+                                    ));
                                 }
                             }
                             result.push_str("},\n");
@@ -188,42 +184,26 @@ pub fn create_write(config: Config, content: &mut str) -> Result<(), Box<Error>>
 
 pub fn check_if_array(content: &str) -> bool {
     let mut chars = content.chars();
-    if chars.next() == Some('[') {
-        true
-    } else {
-        false
-    }
+    chars.next() == Some('[')
 }
 
 pub fn check_if_first_blank(content: &str) -> bool {
     let mut chars = content.chars();
-    if chars.next() == Some(' ') {
-        true
-    } else {
-        false
-    }
+    chars.next() == Some(' ')
 }
 
 pub fn check_if_first_single_quote(content: &str) -> bool {
     let mut chars = content.chars();
     let first_char = chars.next();
 
-    if first_char == Some('\'') {
-        true
-    } else {
-        false
-    }
+    first_char == Some('\'')
 }
 
 pub fn check_if_first_double_quote(content: &str) -> bool {
     let mut chars = content.chars();
     let first_char = chars.next();
 
-    if first_char == Some('"') {
-        true
-    } else {
-        false
-    }
+    first_char == Some('"')
 }
 
 pub fn add_double_quote(content: &str) -> String {
@@ -262,8 +242,8 @@ pub fn remove_first_blank(content: &str) -> &str {
 pub fn convert_front_matter_js(line: &str) -> String {
     let mut result = String::new();
 
-    if line.contains(":") {
-        let mut split_line = line.split(":");
+    if line.contains(':') {
+        let mut split_line = line.split(':');
         if let Some(property) = split_line.next() {
             if check_if_first_single_quote(property) {
                 result.push_str(remove_quote(property));
@@ -280,27 +260,21 @@ pub fn convert_front_matter_js(line: &str) -> String {
             if check_if_first_blank(value) {
                 if check_if_array(remove_first_blank(value)) {
                     result.push_str(remove_first_blank(value));
+                } else if check_if_first_single_quote(remove_first_blank(value)) {
+                    result.push_str(&add_double_quote(remove_quote(remove_first_blank(value))));
+                } else if check_if_first_double_quote(remove_first_blank(value)) {
+                    result.push_str(remove_first_blank(value));
                 } else {
-                    if check_if_first_single_quote(remove_first_blank(value)) {
-                        result.push_str(&add_double_quote(remove_quote(remove_first_blank(value))));
-                    } else if check_if_first_double_quote(remove_first_blank(value)) {
-                        result.push_str(remove_first_blank(value));
-                    } else {
-                        result.push_str(&add_double_quote(remove_first_blank(value)));
-                    }
+                    result.push_str(&add_double_quote(remove_first_blank(value)));
                 }
+            } else if check_if_array(value) {
+                result.push_str(value);
+            } else if check_if_first_single_quote(value) {
+                result.push_str(&add_double_quote(remove_quote(value)));
+            } else if check_if_first_double_quote(value) {
+                result.push_str(value);
             } else {
-                if check_if_array(value) {
-                    result.push_str(value);
-                } else {
-                    if check_if_first_single_quote(value) {
-                        result.push_str(&add_double_quote(remove_quote(value)));
-                    } else if check_if_first_double_quote(value) {
-                        result.push_str(value);
-                    } else {
-                        result.push_str(&add_double_quote(value));
-                    }
-                }
+                result.push_str(&add_double_quote(value));
             }
         }
     }
@@ -311,8 +285,9 @@ pub fn convert_front_matter_js(line: &str) -> String {
 pub fn convert_front_matter_json(line: &str) -> String {
     let mut result = String::new();
 
-    if line.contains(":") {
-        let mut split_line = line.split(":");
+    if line.contains(':') {
+        let mut split_line = line.split(':');
+
         if let Some(property) = split_line.next() {
             if check_if_first_single_quote(property) {
                 result.push_str(&add_double_quote(remove_quote(property)));
@@ -329,27 +304,21 @@ pub fn convert_front_matter_json(line: &str) -> String {
             if check_if_first_blank(value) {
                 if check_if_array(remove_first_blank(value)) {
                     result.push_str(remove_first_blank(value));
+                } else if check_if_first_single_quote(remove_first_blank(value)) {
+                    result.push_str(&add_double_quote(remove_first_blank(value)));
+                } else if check_if_first_double_quote(remove_first_blank(value)) {
+                    result.push_str(remove_first_blank(value));
                 } else {
-                    if check_if_first_single_quote(remove_first_blank(value)) {
-                        result.push_str(&add_double_quote(remove_first_blank(value)));
-                    } else if check_if_first_double_quote(remove_first_blank(value)) {
-                        result.push_str(remove_first_blank(value));
-                    } else {
-                        result.push_str(&add_double_quote(remove_first_blank(value)));
-                    }
+                    result.push_str(&add_double_quote(remove_first_blank(value)));
                 }
+            } else if check_if_array(value) {
+                result.push_str(value);
+            } else if check_if_first_single_quote(value) {
+                result.push_str(&add_double_quote(remove_quote(value)));
+            } else if check_if_first_double_quote(value) {
+                result.push_str(value);
             } else {
-                if check_if_array(value) {
-                    result.push_str(value);
-                } else {
-                    if check_if_first_single_quote(value) {
-                        result.push_str(&add_double_quote(remove_quote(value)));
-                    } else if check_if_first_double_quote(value) {
-                        result.push_str(value);
-                    } else {
-                        result.push_str(&add_double_quote(value));
-                    }
-                }
+                result.push_str(&add_double_quote(value));
             }
         }
     }
@@ -360,16 +329,13 @@ pub fn convert_front_matter_json(line: &str) -> String {
 pub fn parse_front_matter(contents: &str) -> Vec<&str> {
     let mut is_front_matter: bool = false;
     let mut counter_meet_delimiter: u8 = 0;
-    let mut line_number: usize = 0;
     let mut front_matter = Vec::new();
 
-    for line in contents.lines() {
-        line_number += 1;
-
-        if (line_number == 1) & (line != "---") {
+    for (line_number, line) in contents.lines().enumerate() {
+        if (line_number == 0) & (line != "---") {
             // break the loop, if first line is not "---"
             break;
-        } else if (line_number == 1) & (line == "---") {
+        } else if (line_number == 0) & (line == "---") {
             // if first line is "---", increase counter_meet_delimiter and set is_front_matter = true
             counter_meet_delimiter += 1;
             is_front_matter = true;

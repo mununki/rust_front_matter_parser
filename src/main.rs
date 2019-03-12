@@ -6,7 +6,7 @@ use std::process;
 use mdfmp::*;
 
 fn main() {
-    const OPTION_MESSAGE: &'static str =
+    const OPTION_MESSAGE: &str =
         "\n\n::: Markdown Front Matter Parser :::\n\n\
          COMMAND: rust_front_matter_parser -t [type] -f [filename] -s [target directory]\n\n\
          -t : (Required) output type (json or js)\t(eg. -t js)\n\
