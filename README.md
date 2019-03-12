@@ -94,5 +94,6 @@ export default postList;
 
 ### Next to do
 
-- [ ] Write the output to file
+- [x] Write the output to file
+- [ ] Check if overwriting
 - [ ] Error Handling (!important)

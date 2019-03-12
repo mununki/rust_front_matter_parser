@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::fs;
+use std::io::prelude::*;
 use std::path::Path;
+use std::process;
 
 #[derive(Debug, PartialEq)]
 pub enum OutputType {
@@ -96,9 +98,36 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
 
                         let front_matter_as_vec_str = parse_front_matter(&markdown_content);
                         if front_matter_as_vec_str.len() != 0 {
+                            let total_lines: usize = front_matter_as_vec_str.len();
+                            let mut counter_line: usize = 0;
                             result.push_str("{\n");
                             for item in front_matter_as_vec_str {
-                                result.push_str(&format!("\t{},\n", convert_front_matter_js(item)));
+                                counter_line += 1;
+                                if config.output_type == OutputType::JS {
+                                    if counter_line == total_lines {
+                                        result.push_str(&format!(
+                                            "\t{}\n",
+                                            convert_front_matter_js(item)
+                                        ));
+                                    } else {
+                                        result.push_str(&format!(
+                                            "\t{},\n",
+                                            convert_front_matter_js(item)
+                                        ));
+                                    }
+                                } else {
+                                    if counter_line == total_lines {
+                                        result.push_str(&format!(
+                                            "\t{}\n",
+                                            convert_front_matter_json(item)
+                                        ));
+                                    } else {
+                                        result.push_str(&format!(
+                                            "\t{},\n",
+                                            convert_front_matter_json(item)
+                                        ));
+                                    }
+                                }
                             }
                             result.push_str("},\n");
                         }
@@ -108,23 +137,44 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
         }
     };
 
+    // remove trailing comma
+    result.pop();
+    result.pop();
     if config.output_type == OutputType::JS {
-        println!(
-            "const {0} = [\n{1}]\n\nexport default {0};",
+        let mut output_result = format!(
+            "const {0} = [\n{1}\n]\n\nexport default {0};",
             config.filename, result
         );
+        if let Err(e) = create_write(config, &mut output_result) {
+            eprintln!("Application error: {}", e);
+
+            process::exit(1);
+        };
     } else {
-        println!(
-            "{}",
-            format!(
-                "{}\n\"{}\": [\n{}]\n{}",
-                "{",
-                config.filename.as_str(),
-                result.as_str(),
-                "}"
-            )
+        let mut output_result = format!(
+            "{}\n\"{}\": [\n{}\n]\n{}",
+            "{", config.filename, result, "}"
         );
+        if let Err(e) = create_write(config, &mut output_result) {
+            eprintln!("Application error: {}", e);
+
+            process::exit(1);
+        }
     }
+
+    Ok(())
+}
+
+pub fn create_write(config: Config, content: &mut str) -> Result<(), Box<Error>> {
+    let file_extension = match config.output_type {
+        OutputType::JS => "js",
+        OutputType::JSON => "json",
+    };
+
+    let create_filename = config.filename + "." + file_extension;
+    let mut file = fs::File::create(create_filename)?;
+
+    file.write_all(content.as_bytes())?;
 
     Ok(())
 }
@@ -147,11 +197,22 @@ pub fn check_if_first_blank(content: &str) -> bool {
     }
 }
 
-pub fn check_if_first_quote(content: &str) -> bool {
+pub fn check_if_first_single_quote(content: &str) -> bool {
     let mut chars = content.chars();
     let first_char = chars.next();
 
-    if (first_char == Some('\'')) | (first_char == Some('"')) {
+    if first_char == Some('\'') {
+        true
+    } else {
+        false
+    }
+}
+
+pub fn check_if_first_double_quote(content: &str) -> bool {
+    let mut chars = content.chars();
+    let first_char = chars.next();
+
+    if first_char == Some('"') {
         true
     } else {
         false
@@ -197,8 +258,10 @@ pub fn convert_front_matter_js(line: &str) -> String {
     if line.contains(":") {
         let mut split_line = line.split(":");
         if let Some(property) = split_line.next() {
-            if check_if_first_quote(property) {
+            if check_if_first_single_quote(property) {
                 result.push_str(remove_quote(property));
+            } else if check_if_first_double_quote(property) {
+                result.push_str(remove_quote(property))
             } else {
                 result.push_str(property);
             }
@@ -211,7 +274,9 @@ pub fn convert_front_matter_js(line: &str) -> String {
                 if check_if_array(remove_first_blank(value)) {
                     result.push_str(value);
                 } else {
-                    if check_if_first_quote(remove_first_blank(value)) {
+                    if check_if_first_single_quote(remove_first_blank(value)) {
+                        result.push_str(&add_double_quote(remove_quote(remove_first_blank(value))));
+                    } else if check_if_first_double_quote(remove_first_blank(value)) {
                         result.push_str(remove_first_blank(value));
                     } else {
                         result.push_str(&add_double_quote(remove_first_blank(value)));
@@ -221,7 +286,9 @@ pub fn convert_front_matter_js(line: &str) -> String {
                 if check_if_array(value) {
                     result.push_str(value);
                 } else {
-                    if check_if_first_quote(value) {
+                    if check_if_first_single_quote(value) {
+                        result.push_str(&add_double_quote(remove_quote(value)));
+                    } else if check_if_first_double_quote(value) {
                         result.push_str(value);
                     } else {
                         result.push_str(&add_double_quote(value));
@@ -240,8 +307,10 @@ pub fn convert_front_matter_json(line: &str) -> String {
     if line.contains(":") {
         let mut split_line = line.split(":");
         if let Some(property) = split_line.next() {
-            if check_if_first_quote(property) {
-                result.push_str(property);
+            if check_if_first_single_quote(property) {
+                result.push_str(&add_double_quote(remove_quote(property)));
+            } else if check_if_first_double_quote(property) {
+                result.push_str(property)
             } else {
                 result.push_str(&add_double_quote(property));
             }
@@ -254,7 +323,9 @@ pub fn convert_front_matter_json(line: &str) -> String {
                 if check_if_array(remove_first_blank(value)) {
                     result.push_str(value);
                 } else {
-                    if check_if_first_quote(remove_first_blank(value)) {
+                    if check_if_first_single_quote(remove_first_blank(value)) {
+                        result.push_str(&add_double_quote(remove_first_blank(value)));
+                    } else if check_if_first_double_quote(remove_first_blank(value)) {
                         result.push_str(remove_first_blank(value));
                     } else {
                         result.push_str(&add_double_quote(remove_first_blank(value)));
@@ -264,7 +335,9 @@ pub fn convert_front_matter_json(line: &str) -> String {
                 if check_if_array(value) {
                     result.push_str(value);
                 } else {
-                    if check_if_first_quote(value) {
+                    if check_if_first_single_quote(value) {
+                        result.push_str(&add_double_quote(remove_quote(value)));
+                    } else if check_if_first_double_quote(value) {
                         result.push_str(value);
                     } else {
                         result.push_str(&add_double_quote(value));
