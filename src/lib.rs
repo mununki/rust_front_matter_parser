@@ -171,7 +171,7 @@ pub fn create_write(config: Config, content: &mut str) -> Result<(), Box<Error>>
         OutputType::JSON => "json",
     };
 
-    let create_filename = config.filename + "." + file_extension;
+    let create_filename = config.src + "/" + &config.filename + "." + file_extension;
     let mut file = fs::File::create(create_filename)?;
 
     file.write_all(content.as_bytes())?;
