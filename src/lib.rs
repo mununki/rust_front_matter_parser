@@ -26,10 +26,10 @@ impl Config {
                 if arg == "-t".to_string() {
                     arg
                 } else {
-                    return Err("Type option should be '-t'");
+                    return Err("'Output Type' option should be '-t'");
                 }
             }
-            None => return Err("Type option is required."),
+            None => return Err("'Output Type' is required'"),
         };
 
         let output_type = match args.next() {
@@ -39,10 +39,10 @@ impl Config {
                 } else if arg == "json" {
                     OutputType::JSON
                 } else {
-                    return Err("Type option should be either js or json");
+                    return Err("'Output Type' option should be either js or json");
                 }
             }
-            None => return Err("Didn't get a output option."),
+            None => return Err("'Output Type' is required"),
         };
 
         let _filename_check = match args.next() {
@@ -50,15 +50,15 @@ impl Config {
                 if arg == "-f".to_string() {
                     arg
                 } else {
-                    return Err("Filename option should be '-f'");
+                    return Err("'Filename' option should be '-f'");
                 }
             }
-            None => return Err("Filename option is requred."),
+            None => return Err("'Filename' is required"),
         };
 
         let filename = match args.next() {
             Some(arg) => arg,
-            None => return Err("Didn't get a filename option."),
+            None => return Err("'Filename' is required"),
         };
 
         let _src_check = match args.next() {
@@ -66,7 +66,7 @@ impl Config {
                 if arg == "-s".to_string() {
                     arg
                 } else {
-                    return Err("Source option should be '-s'");
+                    return Err("'Target directory' option should be '-s'");
                 }
             }
             None => String::from("-s"),

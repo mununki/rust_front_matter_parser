@@ -1,10 +1,10 @@
-# Markdown front matter parser
+# Markdown front-matter parser
 
 This is a front matter in markdown file(`*.md`, `*.mdx`) parser built with Rust.
 
-## What is front matter?
+## What is front-matter?
 
-The front matter stays on top of markdown content and contains the metadata of itself.
+The front matter is the metadata of markdown content. It stays on top of markdown content and contains the metadata of itself.
 
 ```json
 ---
@@ -39,7 +39,7 @@ $ cargo install --path .
 ## How to use
 
 ```shell
-$ rust_front_matter_parser -t js -f postList -s test
+$ mdfmp -t js -f postList -s posts
 ```
 
 ### Options
@@ -96,4 +96,5 @@ export default postList;
 
 - [x] Write the output to file
 - [x] Parse only md, mdx files
+- [x] CLI message
 - [ ] Error Handling (!important)
