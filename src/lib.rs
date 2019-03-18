@@ -1,3 +1,6 @@
+extern crate clap;
+
+use clap::ArgMatches;
 use std::error::Error;
 use std::fs;
 use std::io::prelude::*;
@@ -18,68 +21,30 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
-        args.next();
-
-        let _output_check = match args.next() {
-            Some(arg) => {
-                if arg == "-t" {
-                    arg
-                } else {
-                    return Err("'Output Type' option should be '-t'");
-                }
-            }
-            None => return Err("'Output Type' is required'"),
-        };
-
-        let output_type = match args.next() {
-            Some(arg) => {
-                if arg == "js" {
+    pub fn new(matches: ArgMatches) -> Result<Config, &'static str> {
+        let output_type = match matches.value_of("type") {
+            Some(t) => {
+                if t == "js" {
                     OutputType::JS
-                } else if arg == "json" {
+                } else if t == "json" {
                     OutputType::JSON
                 } else {
-                    return Err("'Output Type' option should be either js or json");
+                    return Err("Output type is not properly set.");
                 }
             }
-            None => return Err("'Output Type' is required"),
+            _ => return Err("Output type is not properly set."),
         };
 
-        let _filename_check = match args.next() {
-            Some(arg) => {
-                if arg == "-f" {
-                    arg
-                } else {
-                    return Err("'Filename' option should be '-f'");
-                }
-            }
-            None => return Err("'Filename' is required"),
+        let filename = match matches.value_of("filename") {
+            Some(f) => f.to_string(),
+            _ => return Err("Filename is not properly set."),
         };
 
-        let filename = match args.next() {
-            Some(arg) => arg,
-            None => return Err("'Filename' is required"),
-        };
-
-        let _src_check = match args.next() {
-            Some(arg) => {
-                if arg == "-s" {
-                    arg
-                } else {
-                    return Err("'Target directory' option should be '-s'");
-                }
-            }
-            None => String::from("-s"),
-        };
-
-        let src = match args.next() {
-            Some(arg) => arg,
-            None => String::from("."),
-        };
+        let src = matches.value_of("src").unwrap();
 
         Ok(Config {
             output_type,
-            src,
+            src: src.to_string(),
             filename,
         })
     }

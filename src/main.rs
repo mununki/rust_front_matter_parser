@@ -1,28 +1,52 @@
+#[macro_use]
+extern crate clap;
 extern crate mdfmp;
 
-use std::env;
+use clap::{App, Arg};
 use std::process;
 
 use mdfmp::*;
 
 fn main() {
-    const OPTION_MESSAGE: &str =
-        "\n\n::: Markdown Front Matter Parser :::\n\n\
-         COMMAND: rust_front_matter_parser -t [type] -f [filename] -s [target directory]\n\n\
-         -t : (Required) output type (json or js)\t(eg. -t js)\n\
-         -f : (Required) output filename\t\t(eg. -f postList)\n\
-         -s : (Optional) target directory (default: '.', eg. -s posts)\n";
+    let matches = App::new("Markdown front-matter parser")
+        .author("moondaddi <woonki.moon@gmail.com>")
+        .version(crate_version!())
+        .about("Parse the front-matter data from '*.md' or '*.mdx' files")
+        .arg(
+            Arg::with_name("type")
+                .short("t")
+                .long("type")
+                .value_name("TYPE")
+                .help("Set the type of output")
+                .possible_values(&["js", "json"])
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("filename")
+                .short("f")
+                .long("filename")
+                .value_name("FILE")
+                .help("Set the filename of output")
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("src")
+                .short("s")
+                .long("src")
+                .value_name("directory")
+                .help("Set the source directory")
+                .default_value("."),
+        )
+        .get_matches();
 
-    let config = Config::new(env::args()).unwrap_or_else(|err| {
+    let config = Config::new(matches).unwrap_or_else(|err| {
         eprintln!("[Error] {}", err);
-        eprintln!("{}", OPTION_MESSAGE);
 
         process::exit(1);
     });
 
     if let Err(e) = run(config) {
         eprintln!("Application error: {}", e);
-        eprintln!("{}", OPTION_MESSAGE);
 
         process::exit(1);
     };

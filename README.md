@@ -23,7 +23,6 @@ keyword: ["first", "post"]
 - Blazing fast
 - Creating `*.json` or `*.js` file from all markdown files in target directory
 - CLI tool
-- Zero dependencies
 
 ## Build
 
@@ -39,7 +38,26 @@ $ cargo install --path .
 ## How to use
 
 ```shell
-$ mdfmp -t js -f postList -s posts
+$ mdfmp -h
+Markdown front-matter parser 0.1.0
+moondaddi <woonki.moon@gmail.com>
+Parse the front-matter data from '*.md' or '*.mdx' files
+
+USAGE:
+		mdfmp [OPTIONS] --filename <FILE> --type <TYPE>
+
+FLAGS:
+		-h, --help       Prints help information
+		-V, --version    Prints version information
+
+OPTIONS:
+		-f, --filename <FILE>    Set the filename of output
+		-s, --src <directory>    Set the source directory [default: .]
+		-t, --type <TYPE>        Set the type of output [possible values: js, json]
+```
+
+```shell
+$ mdfmp -t js -f postList -s test
 ```
 
 ### Options
@@ -97,4 +115,5 @@ export default postList;
 - [x] Write the output to file
 - [x] Parse only md, mdx files
 - [x] CLI message
-- [ ] Error Handling (!important)
+- [x] Optional CLI args with Clap
+- [x] Error Handling (!important)
