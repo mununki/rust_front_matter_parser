@@ -50,7 +50,7 @@ impl Config {
     }
 }
 
-pub fn run(config: Config) -> Result<(), Box<Error>> {
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let mut result = String::new();
 
     if let Ok(entries) = fs::read_dir(Path::new(&config.src)) {
@@ -133,7 +133,7 @@ pub fn run(config: Config) -> Result<(), Box<Error>> {
     Ok(())
 }
 
-pub fn create_write(config: Config, content: &mut str) -> Result<(), Box<Error>> {
+pub fn create_write(config: Config, content: &mut str) -> Result<(), Box<dyn Error>> {
     let file_extension = match config.output_type {
         OutputType::JS => "js",
         OutputType::JSON => "json",
